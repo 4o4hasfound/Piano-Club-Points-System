@@ -124,6 +124,11 @@ def register_post():
     user.set_password(password)
     db.session.add(user)
     db.session.commit()
+    
+    SUPER_ADMIN = "113062206"   # your account
+    if not Admin.query.get(SUPER_ADMIN):
+        db.session.add(Admin(account=SUPER_ADMIN))
+        db.session.commit()
 
     return redirect(url_for("main.login_get"))
 

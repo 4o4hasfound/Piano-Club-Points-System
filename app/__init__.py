@@ -16,15 +16,6 @@ def create_app(config_class="app.config.Config"):
     # register routes
     app.register_blueprint(routes.bp)
     
-    @app.before_request
-    def ensure_super_admin():
-        from app.models.admins import Admin
-        from app.extensions import db
-        SUPER_ADMIN = "113062206"   # your account
-        if not Admin.query.get(SUPER_ADMIN):
-            db.session.add(Admin(account=SUPER_ADMIN))
-            db.session.commit()
-            
     # @app.error_handler_spec(400)
     # @app.error_handler_spec(404)
     # def bad_request(e):
