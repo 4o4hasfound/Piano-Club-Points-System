@@ -7,7 +7,7 @@ class User(db.Model):
     
     account = db.Column(db.String(9), primary_key=True)
     name = db.Column(db.String(64), nullable=False)
-    password_hash = db.Column(db.String(128), nullable=False)
+    password_hash = db.Column(db.String(256), nullable=False)
     points = db.Column(db.Integer, default=0, nullable=False)
     
     records = db.relationship("Record", back_populates="user", cascade="all, delete-orphan")
