@@ -34,8 +34,6 @@ document.addEventListener('DOMContentLoaded', () => {
     function validatePassword() {
         const v = pwd.value;
         if (!v) { errPwd.textContent = '請輸入密碼。'; return false; }
-        if (!isDigits(v)) { errAccount.textContent = '帳號僅能包含數字、英文字母、 \'-\' 和 \'_\' 。'; return false; }
-        if (v.length != 9) { errAccount.textContent = '長度需為9位。'; return false; }
         errPwd.textContent = '';
         return true;
     }
