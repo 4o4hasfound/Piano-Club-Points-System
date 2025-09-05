@@ -20,7 +20,7 @@
         <form class="form" id="admin-search-form" method="GET" action="{{ url_for('main.admin') }}">
             <div class="field">
                 <label for="account" class="label">查詢帳號（純數字）</label>
-                <input id="account" name="target" type="text" inputmode="numeric" pattern="[0-9]+" required
+                <input id="account" name="target" type="text" inputmode="numeric" pattern="\d+" required
                     placeholder="例如：113062206" class="input" value="{{ target.account or '' }}">
             </div>
             <div class="actions">

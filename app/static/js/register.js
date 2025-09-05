@@ -16,7 +16,7 @@ document.addEventListener('DOMContentLoaded', () => {
     function validateAccount() {
         const v = account.value.trim();
         if (!v) { errAccount.textContent = '請輸入學號 / 帳號。'; return false; }
-        if (!isDigits(v)) { errAccount.textContent = '帳號僅能包含數字、英文字母、 \'-\' 和 \'_\' 。'; return false; }
+        if (!isDigits(v)) { errAccount.textContent = '帳號僅能包含數字。'; return false; }
         if (v.length != 9) { errAccount.textContent = '長度需為9位。'; return false; }
         errAccount.textContent = '';
         return true;
