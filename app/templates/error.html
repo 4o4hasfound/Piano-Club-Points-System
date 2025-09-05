@@ -1,0 +1,11 @@
+{% extends "base.html" %}
+
+{% block title %}400 錯誤 - 琴房點數系統{% endblock %}
+
+{% block content %}
+    <h1 id="app-title">{{code}} - 錯誤</h1>
+
+    <div class="trace">
+        <p><strong>錯誤代碼：</strong> <code>{{ reason }}</code></p>
+    </div>
+{% endblock %}

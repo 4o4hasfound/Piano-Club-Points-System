@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>{% block title %}琴房點數系統{% endblock %}</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/styles.css') }}">
+    {% block head_extra %}{% endblock %}
+</head>
+
+<body>
+    <main class="shell">
+        <section class="card" role="region" aria-labelledby="app-title">
+            {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+            <div class="flashes">
+                {% for category, msg in messages %}
+                <div class="flash {{ 'is-'+category }}">{{ msg }}</div>
+                {% endfor %}
+            </div>
+            {% endif %}
+            {% endwith %}
+
+            {% block content %}{% endblock %}
+            <div class="meta">
+                <small>需要協助？請聯絡鋼琴社幹部。</small>
+                <nav class="links" aria-label="快速連結">
+                    <a class="link" href="{{ url_for('main.index') }}">首頁</a>
+                </nav>
+            </div>
+        </section>
+    </main>
+    {% block body_scripts %}{% endblock %}
+</body>
+
+</html>

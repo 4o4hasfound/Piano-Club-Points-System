@@ -1,0 +1,42 @@
+{% extends "base.html" %}
+{% block title %}管理員清單｜琴房點數系統{% endblock %}
+
+{% block content %}
+<div class="hero">
+    <h1 class="title-box">管理員清單</h1>
+    <p class="subtitle">目前所有擁有管理員權限的帳號</p>
+</div>
+
+<section class="dashboard dashboard-inner">
+    <section class="records">
+        <div class="table-wrap">
+            <table class="table" aria-label="管理員清單">
+                <thead>
+                    <tr>
+                        <th>帳號</th>
+                        <th>姓名</th>
+                        <th>動作</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for admin, u in admins %}
+                    <tr data-account="{{ u.account }}" data-name="{{ u.name }}">
+                        <td>{{ u.account }}</td>
+                        <td>{{ u.name }}</td>
+                        <td>
+                            <a class="btn btn-sm {{ 'btn-success' if u.account == user.account else 'btn-secondary' }}" href="{{ url_for('main.admin', target=u.account) }}">
+                                檢視
+                            </a>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </section>
+</section>
+<div class="actions" style="margin-top: 10px;">
+    <a class="btn btn-login" href="{{ url_for('main.index') }}">返回首頁</a>
+    <a class="btn btn-secondary" href="{{ url_for('main.admin') }}">返回後台</a>
+</div>
+{% endblock %}

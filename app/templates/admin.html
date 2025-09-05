@@ -1,0 +1,273 @@
+{% extends "base.html" %}
+{% block title %}管理後台｜琴房點數系統{% endblock %}
+
+{% block content %}
+<div class="hero">
+    <h1 id="app-title" class="title-box">管理後台</h1>
+    <p class="subtitle">查詢使用者、調整點數、檢視與編輯紀錄。僅限管理員。</p>
+</div>
+
+{% if error %}
+<div class="error-container">
+    <p class="error">{{ error }}</p>
+</div>
+{% endif %}
+
+<section class="dashboard">
+    <div class="dashboard-inner">
+
+        <!-- Search / Load user -->
+        <form class="form" id="admin-search-form" method="GET" action="{{ url_for('main.admin') }}">
+            <div class="field">
+                <label for="account" class="label">查詢帳號（純數字）</label>
+                <input id="account" name="target" type="text" inputmode="numeric" pattern="[0-9]+" required
+                    placeholder="例如：113062206" class="input" value="{{ target.account or '' }}">
+            </div>
+            <div class="actions">
+                <button type="submit" class="btn btn-secondary">查詢</button>
+                <a class="btn btn-outline" href="{{ url_for('main.admin') }}" role="button">清除</a>
+            </div>
+        </form>
+
+        {% if target %}
+        <!-- Target user summary -->
+        <div class="points">
+            <div class="value-bubble" aria-label="目前點數與目標">
+                <div class="bubble-line">
+                    <span class="bubble-value">{{ target.points }}</span>
+                    <span class="bubble-slash">/</span>
+                    <span class="bubble-milestone {% if target.points >= milestone %}ok{% endif %}">{{ milestone
+                        }}</span>
+                </div>
+            </div>
+        </div>
+        <p class="points-msg {% if target.points < milestone %}under{% else %}ok{% endif %}">
+            {{ target.name }}（{{ target.account }}）
+            {% if target.points < milestone %} 尚未達標 {% else %} 已達標 {% endif %} </p>
+                <form method="POST" action="{{ url_for('main.toggle_admin') }}" style="margin-top:12px;">
+                    <input type="hidden" name="account" value="{{ target.account }}">
+                    {% if is_admin %}
+                    <button type="submit" class="btn btn-outline danger">取消管理員</button>
+                    {% else %}
+                    <button type="submit" class="btn btn-secondary">設為管理員</button>
+                    {% endif %}
+                </form>
+                <!-- Add / Remove points -->
+                <form class="form" id="admin-adjust-form" method="POST" action="{{ url_for('main.admin_adjust') }}">
+                    <input type="hidden" name="account" value="{{ target.account }}">
+                    <div class="field">
+                        <label for="op" class="label">操作</label>
+                        <div class="radio-group center">
+                            <label class="checkbox">
+                                <input type="radio" name="op" value="add" checked>
+                                <span>加點</span>
+                            </label>
+                            <label class="checkbox">
+                                <input type="radio" name="op" value="remove">
+                                <span>扣點</span>
+                            </label>
+                        </div>
+                    </div>
+                    <div class="field-inline">
+                        <div class="field half">
+                            <label for="amount" class="label">數量（整數）</label>
+                            <input id="amount" name="amount" type="number" step="1" required placeholder="例如：3"
+                                class="input">
+                        </div>
+                        <div class="field flex-grow">
+                            <label for="reason" class="label">原因</label>
+                            <input id="reason" name="reason" type="text" required placeholder="例如：活動協助 / 遲到扣點"
+                                class="input">
+                        </div>
+                    </div>
+                    <div class="actions">
+                        <button type="submit" class="btn btn-register">提交變更</button>
+                    </div>
+                </form>
+
+                <!-- Filters & sorting -->
+                <div class="form" style="padding-top:10px;">
+                    <div class="toolbar">
+                        <div class="toolbar-left">
+                            <label class="label">篩選</label>
+                            <select id="filter-type" class="input w-180">
+                                <option value="">全部類型</option>
+                                <option value="add">加點</option>
+                                <option value="remove">扣點</option>
+                            </select>
+                            <input id="filter-text" class="input w-260" placeholder="關鍵字（原因/時間）">
+                        </div>
+
+                        <div class="toolbar-right">
+                            <label class="label">排序</label>
+                            <select id="sort-key" class="input w-200">
+                                <option value="time_desc">時間（新→舊）</option>
+                                <option value="time_asc">時間（舊→新）</option>
+                                <option value="amount_desc">數量（大→小）</option>
+                                <option value="amount_asc">數量（小→大）</option>
+                                <option value="type_add_first">類型（加點優先）</option>
+                                <option value="type_remove_first">類型（扣點優先）</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Records (editable) -->
+                <div class="records">
+                    <h2 class="records-title">點數紀錄：{{ target.name }}</h2>
+                    {% if records %}
+                    <div class="table-wrap">
+                        <table class="table" id="admin-records-table" aria-label="管理員檢視紀錄">
+                            <thead>
+                                <tr>
+                                    <th>時間</th>
+                                    <th>類型</th>
+                                    <th>數量</th>
+                                    <th>原因</th>
+                                    <th>操作</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for r in records %}
+                                <tr data-idx="{{ r.idx }}" data-type="{{ r.type|e }}" data-amount="{{ r.amount }}"
+                                    data-time="{{ r.time|e }}" data-reason="{{ r.reason|e }}">
+
+                                    <!-- Time -->
+                                    <td class="td-time">
+                                        <span class="ro ro-time">{{ r.time }}</span>
+                                    </td>
+
+                                    <!-- Type -->
+                                    <td class="td-type">
+                                        <!-- read-only -->
+                                        <span class="ro ro-type {{ 'badge-add' if r.type=='add' else 'badge-remove' }}">
+                                            {{ '加點' if r.type=='add' else '扣點' }}
+                                        </span>
+                                        <!-- editor -->
+                                        <select class="input input-sm edit edit-type hidden">
+                                            <option value="add" {% if r.type=='add' %}selected{% endif %}>加點</option>
+                                            <option value="remove" {% if r.type=='remove' %}selected{% endif %}>扣點
+                                            </option>
+                                        </select>
+                                    </td>
+
+                                    <!-- Amount -->
+                                    <td class="td-amount">
+                                        <!-- read-only -->
+                                        <span
+                                            class="ro ro-amount {{ 'amount-add' if r.type=='add' else 'amount-remove' }}">
+                                            {{ r.amount }}
+                                        </span>
+                                        <!-- editor -->
+                                        <input class="input input-sm edit edit-amount hidden" type="number" step="1"
+                                            value="{{ r.amount }}">
+                                    </td>
+
+                                    <!-- Reason -->
+                                    <td class="td-reason">
+                                        <!-- read-only -->
+                                        <span class="ro ro-reason" title="{{ r.reason }}">{{ r.reason }}</span>
+                                        <!-- editor -->
+                                        <input class="input input-sm edit edit-reason hidden" type="text"
+                                            value="{{ r.reason }}">
+                                    </td>
+
+                                    <!-- Actions -->
+                                    <td class="td-actions">
+                                        <!-- edit state controls -->
+                                        <button type="button" class="btn btn-secondary btn-sm btn-edit">編輯</button>
+
+                                        <form class="inline form-save hidden" method="POST"
+                                            action="{{ url_for('main.admin_record_update') }}">
+                                            <input type="hidden" name="account" value="{{ target.account }}">
+                                            <input type="hidden" name="id" value="{{ r.id }}">
+                                            <input type="hidden" name="type" class="post-type">
+                                            <input type="hidden" name="amount" class="post-amount">
+                                            <input type="hidden" name="reason" class="post-reason">
+                                            <button type="submit" class="btn btn-secondary btn-sm">儲存</button>
+                                        </form>
+
+                                        <button type="button"
+                                            class="btn btn-outline btn-sm hidden btn-cancel">取消</button>
+
+                                        <form class="inline" method="POST"
+                                            action="{{ url_for('main.admin_record_delete') }}"
+                                            onsubmit="return confirm('確定刪除這筆紀錄？');">
+                                            <input type="hidden" name="account" value="{{ target.account }}">
+                                            <input type="hidden" name="id" value="{{ r.id }}">
+                                            <button type="submit" class="btn btn-outline btn-sm danger">刪除</button>
+                                        </form>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+
+
+                            </tbody>
+                        </table>
+                    </div>
+                    {% else %}
+                    <p class="hint">尚無紀錄。</p>
+                    {% endif %}
+                </div>
+                {% endif %}
+
+                <!-- All users overview -->
+                <div class="records" style="margin-top:22px;">
+                    <h2 class="records-title">所有使用者</h2>
+                    <div class="form" style="padding-top:8px;">
+                        <div class="field" style="display:flex; gap:12px; flex-wrap:wrap; align-items:center;">
+                            <input id="users-filter-text" class="input" style="max-width:260px;"
+                                placeholder="搜尋（帳號/姓名）">
+                            <label class="label" style="margin-left:auto;">排序</label>
+                            <select id="users-sort-key" class="input" style="max-width:220px;">
+                                <option value="account_asc">帳號（小→大）</option>
+                                <option value="account_desc">帳號（大→小）</option>
+                                <option value="name_asc">姓名（A→Z）</option>
+                                <option value="name_desc">姓名（Z→A）</option>
+                                <option value="points_desc">點數（大→小）</option>
+                                <option value="points_asc">點數（小→大）</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="table-wrap">
+                        <table class="table" id="admin-users-table" aria-label="所有使用者">
+                            <thead>
+                                <tr>
+                                    <th>帳號</th>
+                                    <th>姓名</th>
+                                    <th>點數</th>
+                                    <th>紀錄數</th>
+                                    <th>動作</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for u in all_users %}
+                                <tr data-account="{{ u.account }}" data-name="{{ u.name|e }}"
+                                    data-points="{{ u.points }}" data-count="{{ u.count }}">
+                                    <td>{{ u.account }}</td>
+                                    <td>{{ u.name }}</td>
+                                    <td class="{{ 'amount-add' if u.points>=0 else 'amount-remove' }}">{{ u.points }}
+                                    </td>
+                                    <td>{{ u.count }}</td>
+                                    <td><a class="btn btn-sm {{ 'btn-success' if u.account == user.account else 'btn-secondary' }}"
+                                            href="{{ url_for('main.admin', target=u.account) }}">檢視</a></td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <div class="actions" style="margin-top: 10px;">
+                    <a class="btn btn-login" href="{{ url_for('main.index') }}">返回首頁</a>
+                    <a class="btn btn-secondary" href="{{ url_for('main.admins_list') }}">管理員清單</a>
+                    <a class="btn btn-register" href="{{ url_for('main.logout') }}">登出</a>
+                </div>
+    </div>
+</section>
+{% endblock %}
+
+{% block body_scripts %}
+<script src="{{ url_for('static', filename='js/admin.js') }}"></script>
+{% endblock %}

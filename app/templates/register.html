@@ -1,0 +1,59 @@
+{% extends "base.html" %}
+{% block title %}註冊｜琴房點數系統{% endblock %}
+
+{% block content %}
+  <div class="hero">
+    <h1 id="app-title" class="title-box">琴房點數系統</h1>
+    <p class="subtitle">建立新帳號以使用點數管理與預約功能。</p>
+  </div>
+
+  {% if error %}
+  <div class="error-container">
+    <p class="error">{{ error }}</p>
+  </div>
+  {% endif %}
+
+  <form class="form" id="register-form" method="POST" action="{{ url_for('main.register_post') }}">
+    <div class="field">
+      <label for="account" class="label">學號 / 帳號（純數字）</label>
+      <input id="account" name="account" type="text" inputmode="numeric" pattern="\d+"
+             autocomplete="username" required placeholder="請輸入你的學號" class="input"
+             aria-describedby="account-help account-error" />
+      <small id="account-help" class="hint">請勿使用他人學號</small>
+      <div id="account-error" class="error" role="alert" aria-live="polite"></div>
+    </div>
+
+    <div class="field">
+      <label for="name" class="label">姓名</label>
+      <input id="name" name="name" type="text" autocomplete="name" required
+             placeholder="您的姓名" class="input" aria-describedby="name-error" />
+      <div id="name-error" class="error" role="alert" aria-live="polite"></div>
+    </div>
+
+    <div class="field">
+      <label for="password" class="label">密碼</label>
+      <input id="password" name="password" type="password" pattern="[a-zA-Z0-9-_]+"
+             autocomplete="new-password" required minlength="4" maxlength="20"
+             placeholder="4 到 20 碼" class="input" aria-describedby="password-hint password-error" />
+      <small id="password-hint" class="hint">4 到 20 碼；建議混合大小寫、數字與符號(- 或者 _)。</small>
+      <div id="password-error" class="error" role="alert" aria-live="polite"></div>
+    </div>
+
+    <div class="field">
+      <label for="confirm" class="label">確認密碼</label>
+      <input id="confirm" name="confirm" type="password" pattern="[a-zA-Z0-9-_]+"
+             autocomplete="new-password" required placeholder="再次輸入密碼" 
+             class="input" aria-describedby="confirm-error" />
+      <div id="confirm-error" class="error" role="alert" aria-live="polite"></div>
+    </div>
+
+    <div class="actions">
+      <button type="submit" class="btn btn-register">建立帳號</button>
+      <a class="btn btn-login" href="{{ url_for('main.login_get') }}" role="button">返回登入</a>
+    </div>
+  </form>
+{% endblock %}
+
+{% block body_scripts %}
+  <script src="{{ url_for('static', filename='js/register.js') }}"></script>
+{% endblock %}

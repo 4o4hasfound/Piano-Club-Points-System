@@ -1,0 +1,86 @@
+{% extends "base.html" %}
+{% block title %}琴房點數系統{% endblock %}
+
+{% block content %}
+<div class="hero">
+    <h1 id="app-title" class="title-box">琴房點數系統</h1>
+    {% if user %}
+    <p class="subtitle">歡迎回來，<strong>{{ user.name }}</strong>！以下是您的點數與紀錄。</p>
+    {% else %}
+    <p class="subtitle">
+        管理與查看琴房點數的平台。請使用真實的學號登入/註冊，如果有任何問題請詢問鋼琴社幹部
+    </p>
+    {% endif %}
+</div>
+
+{% if user %}
+<section class="dashboard">
+    <div class="dashboard-inner">
+        <!-- Bubble: points and /milestone inside -->
+        <div class="points">
+            <div class="value-bubble" aria-label="目前點數與目標">
+                <div class="bubble-line">
+                    <span class="bubble-value" aria-label="目前點數">{{ user.points }}</span>
+                    <span class="bubble-slash" aria-hidden="true">/</span>
+                    <span class="bubble-milestone {% if user.points >= milestone %}ok{% endif %}" aria-label="目標點數">
+                        {{ milestone }}
+                    </span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Records -->
+        <div class="records">
+            <h2 class="records-title">點數紀錄</h2>
+            {% if records %}
+            <div class="table-wrap">
+                <table class="table" aria-label="點數異動紀錄">
+                    <thead>
+                        <tr>
+                            <th scope="col">時間</th>
+                            <th scope="col">類型</th>
+                            <th scope="col">數量</th>
+                            <th scope="col">原因</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for r in records %}
+                        <tr>
+                            <td>{{ r.time }}</td>
+                            <td>
+                                <span class="badge {{ 'badge-add' if r.type == 'add' else 'badge-remove' }}">
+                                    {{ '加點' if r.type == 'add' else '扣點' }}
+                                </span>
+                            </td>
+                            <td class="amount {{ 'amount-add' if r.type == 'add' else 'amount-remove' }}">
+                                {{ r.amount }}
+                            </td>
+                            <td>
+                                <span class="reason-chip" title="{{ r.reason }}">{{ r.reason }}</span>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+            {% else %}
+            <p class="hint">目前尚無點數異動紀錄。</p>
+            {% endif %}
+        </div>
+    </div>
+
+    <div class="actions" style="margin-top:10px;">
+        <a class="btn btn-login" href="{{ url_for('main.index') }}" role="button">重新整理</a>
+        {% if is_admin %}
+        <a class="btn btn-secondary" href="{{ url_for('main.admin') }}" role="button">管理後台</a>
+        {% endif %}
+        <a class="btn btn-register" href="{{ url_for('main.logout') }}" role="button">登出</a>
+    </div>
+</section>
+{% else %}
+<div class="actions">
+    <a class="btn btn-login" href="{{ url_for('main.login_get') }}" role="button">登入</a>
+    <a class="btn btn-register" href="{{ url_for('main.register_get') }}" role="button">註冊</a>
+</div>
+{% endif %}
+{% endblock %}
