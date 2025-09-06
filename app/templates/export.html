@@ -1,0 +1,47 @@
+{% extends "base.html" %}
+{% block title %}資料匯出｜琴房點數系統{% endblock %}
+
+{% block content %}
+<div class="hero">
+    <h1 id="app-title" class="title-box">資料匯出</h1>
+    <p class="subtitle">選擇要匯出的資料表與格式，並下載檔案。</p>
+</div>
+
+{% if error %}
+<div class="error-container">
+    <p class="error">{{ error }}</p>
+</div>
+{% endif %}
+
+<section class="dashboard">
+    <div class="dashboard-inner">
+
+        <!-- Export form -->
+        <form class="form" method="POST" action="{{ url_for('main.export') }}">
+            <div class="field">
+                <label for="table" class="label">選擇資料表</label>
+                <select id="table" name="table" class="input" required>
+                    {% for table in tables %}
+                    <option value="{{ table }}">{{ table }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+
+            <div class="field">
+                <label for="format" class="label">選擇格式</label>
+                <select id="format" name="format" class="input" required>
+                    <option value="csv">CSV (.csv)</option>
+                    <option value="excel">Excel (.xlsx)</option>
+                    <option value="sql">SQL (INSERT 語法)</option>
+                </select>
+            </div>
+
+            <div class="actions" style="margin-top: 0; margin-bottom: 0;">
+                <button type="submit" class="btn btn-login">下載</button>
+                <a class="btn btn-secondary" href="{{ url_for('main.index') }}">返回首頁</a>
+                <a class="btn btn-secondary" href="{{ url_for('main.admin') }}">返回後台</a>
+            </div>
+        </form>
+    </div>
+</section>
+{% endblock %}

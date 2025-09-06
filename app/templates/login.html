@@ -2,41 +2,58 @@
 {% block title %}登入｜琴房點數系統{% endblock %}
 
 {% block content %}
-  <div class="hero">
-    <h1 id="app-title" class="title-box">琴房點數系統</h1>
-    <p class="subtitle">請登入以查看點數與紀錄。</p>
+<div class="hero">
+  <h1 id="app-title" class="title-box">琴房點數系統</h1>
+  <p class="subtitle">請登入以查看點數與紀錄。</p>
+</div>
+
+{% if error %}
+<div class="error-container">
+  <p class="error">{{ error }}</p>
+</div>
+{% endif %}
+
+<form class="form" id="login-form" method="POST" action="{{ url_for('main.login_post') }}" novalidate>
+  <div class="field">
+    <label for="account" class="label">學號 / 帳號（純數字）</label>
+    <input id="account" name="account" type="text" inputmode="numeric" pattern="\d+" autocomplete="username" required
+      placeholder="請輸入你的學號" class="input" aria-describedby="account-error" />
+    <div id="account-error" class="error" role="alert" aria-live="polite"></div>
   </div>
 
-  {% if error %}
-  <div class="error-container">
-    <p class="error">{{ error }}</p>
+  <div class="field">
+    <label for="password" class="label">密碼</label>
+    <input id="password" name="password" type="password" pattern="[a-zA-Z0-9_\-]+" autocomplete="current-password"
+      required minlength="4" required maxlength="20" placeholder="4 到 20 碼" class="input"
+      aria-describedby="password-error" />
+    <div id="password-error" class="error" role="alert" aria-live="polite"></div>
   </div>
-  {% endif %}
 
-  <form class="form" id="login-form" method="POST" action="{{ url_for('main.login_post') }}" novalidate>
-    <div class="field">
-      <label for="account" class="label">學號 / 帳號（純數字）</label>
-      <input id="account" name="account" type="text" inputmode="numeric" pattern="\d+"
-             autocomplete="username" required placeholder="請輸入你的學號" class="input"
-             aria-describedby="account-error" />
-      <div id="account-error" class="error" role="alert" aria-live="polite"></div>
+  <div class="field">
+    <label class="label">記住登入</label>
+    <div class="remember-options">
+      <label>
+        <input type="radio" name="remember" value="session" checked>
+        僅此次（關閉瀏覽器即登出）
+      </label>
+      <label>
+        <input type="radio" name="remember" value="7days">
+        7 天
+      </label>
+      <label>
+        <input type="radio" name="remember" value="forever">
+        永久
+      </label>
     </div>
+  </div>
 
-    <div class="field">
-      <label for="password" class="label">密碼</label>
-      <input id="password" name="password" type="password" pattern="[a-zA-Z0-9_\-]+" 
-             autocomplete="current-password" required minlength="4" required maxlength="20" 
-             placeholder="4 到 20 碼" class="input" aria-describedby="password-error" />
-      <div id="password-error" class="error" role="alert" aria-live="polite"></div>
-    </div>
-
-    <div class="actions">
-      <button type="submit" class="btn btn-login">登入</button>
-      <a class="btn btn-register" href="{{ url_for('main.register_get') }}" role="button">註冊新帳號</a>
-    </div>
-  </form>
+  <div class="actions">
+    <button type="submit" class="btn btn-login">登入</button>
+    <a class="btn btn-register" href="{{ url_for('main.register_get') }}" role="button">註冊新帳號</a>
+  </div>
+</form>
 {% endblock %}
 
 {% block body_scripts %}
-  <script src="{{ url_for('static', filename='js/login.js') }}"></script>
+<script src="{{ url_for('static', filename='js/login.js') }}"></script>
 {% endblock %}

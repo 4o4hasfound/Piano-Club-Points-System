@@ -1,8 +1,13 @@
-from werkzeug.security import check_password_hash, generate_password_hash
-from datetime import datetime
-from functools import wraps
-from flask import Blueprint, request, render_template, redirect, url_for, flash, session
+import csv
+import pandas as pd
 from re import fullmatch
+from functools import wraps
+from sqlalchemy import text
+from zoneinfo import ZoneInfo
+from datetime import timedelta
+from io import StringIO, BytesIO
+from flask import Blueprint, request, render_template, redirect, url_for, session, Response
+
 from .models.user import User
 from .models.record import Record
 from .models.admins import Admin
@@ -11,6 +16,7 @@ from .extensions import db
 bp = Blueprint("main", __name__)
 
 MILESTONE = 15
+TAIPEI = ZoneInfo("Asia/Taipei")
 
 # ---------------- Helpers ----------------
 def get_current_user():
@@ -75,6 +81,7 @@ def login_get():
 def login_post():
     account = request.form.get("account","").strip()
     password = request.form.get("password","")
+    remember = request.form.get("remember", "session")
 
     if not account.isdigit() or not (len(account) == 9):
         return render_template("login.html", error="帳號需為 9 位數字。"), 400
@@ -86,6 +93,16 @@ def login_post():
         return render_template("login.html", error="帳號或密碼錯誤。"), 401
 
     session["account"] = account
+    
+    if remember == "session":
+        session.permanent = False
+    elif remember == "7days":
+        session.permanent = True
+        bp.permanent_session_lifetime = timedelta(days=7)
+    elif remember == "forever":
+        session.permanent = True
+        bp.permanent_session_lifetime = timedelta(days=365*10)
+    
     return redirect(url_for("main.index"))
 
 @bp.get("/logout")
@@ -199,17 +216,17 @@ def admin_adjust():
 
     target = User.query.get(account)
     if not target:
-        return redirect(url_for("main.admin", target=account, error="找不到該帳號。"))
+        return redirect(url_for("main.admin", target=account))
 
     try:
         amt = int(amount_raw)
     except ValueError:
-        return redirect(url_for("main.admin", target=account, error="數量必須是整數。"))
+        return redirect(url_for("main.admin", target=account))
 
     if amt == 0:
-        return redirect(url_for("main.admin", target=account, error="數量不可為 0。"))
+        return redirect(url_for("main.admin", target=account))
     if not reason:
-        return redirect(url_for("main.admin", target=account, error="請輸入原因。"))
+        return redirect(url_for("main.admin", target=account))
 
     # Normalize sign
     if op == "add" and amt < 0: amt = abs(amt)
@@ -219,6 +236,7 @@ def admin_adjust():
                  type="add" if amt > 0 else "remove",
                  amount=amt,
                  reason=reason)
+    
     target.points += amt
     db.session.add(rec)
     db.session.commit()
@@ -263,7 +281,7 @@ def admin_record_update():
     # --- Update the record ---
     rec = Record.query.filter_by(id=rec_id, user_account=account).first()
     if not rec:
-        return redirect(url_for("main.admin", target=account, error="找不到該筆紀錄。"))
+        return redirect(url_for("main.admin", target=account))
 
     # Adjust user points: remove old, apply new
     target.points -= rec.amount
@@ -339,3 +357,87 @@ def admins_list():
         .all()
     )
     return render_template("adminlist.html", admins=admins, milestone=MILESTONE, user=get_current_user())
+
+@bp.route("/export", methods=["GET", "POST"])
+def export():
+    tables = ["Users", "Records", "Admins"]
+    
+    if request.method == "POST":
+        table = request.form["table"]
+        format_ = request.form["format"]
+        
+        query = ""
+        if table == "Users":
+            query = "SELECT account, name, password_hash, points FROM users"
+        elif table == "Records":
+            query = f"""
+                SELECT id, user_account, (time AT TIME ZONE 'Asia/Taipei') AS time,
+                    type, amount, reason
+                FROM records
+            """
+        elif table == "Admins":
+            query = "SELECT account FROM admins"
+            
+        rows = db.session.execute(text(query)).mappings().all()
+
+        if not rows:
+            return "No data in table."
+
+        columns = rows[0].keys()
+        print(rows)
+        
+        # Export as CSV
+        if format_ == "csv":
+            output = StringIO()
+            writer = csv.DictWriter(output, fieldnames=columns, extrasaction="ignore")
+
+            writer.writeheader()
+            writer.writerows(rows)
+            
+            csv_text = "\ufeff" + output.getvalue()
+
+            return Response(
+                csv_text,
+                mimetype="text/csv",
+                headers={"Content-Disposition": f"attachment;filename={table}.csv"},
+            )
+
+        # Export as Excel
+        elif format_ == "excel":
+            df = pd.DataFrame(rows, columns=columns)
+            output = BytesIO()
+            with pd.ExcelWriter(output, engine="openpyxl") as writer:
+                df.to_excel(writer, index=False, sheet_name=table)
+            output.seek(0)
+            return Response(
+                output,
+                mimetype="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+                headers={"Content-Disposition": f"attachment;filename={table}.xlsx"},
+            )
+
+        # Export as SQL (INSERT statements)
+        elif format_ == "sql":
+            sql_lines = []
+
+            # Quote column names for Postgres
+            colnames = ", ".join([f'"{col}"' for col in columns])
+            placeholders = ", ".join([f":{col}" for col in columns])
+
+            stmt = text(f"INSERT INTO {table} ({colnames}) VALUES ({placeholders});")
+
+            for row in rows:
+                # Compile statement with bound parameters
+                compiled = stmt.bindparams(**row).compile(
+                    dialect=db.engine.dialect,
+                    compile_kwargs={"literal_binds": True}
+                )
+                sql_lines.append(str(compiled))
+
+            sql_text = "\n".join(sql_lines)
+            return Response(
+                sql_text,
+                mimetype="text/sql",
+                headers={"Content-Disposition": f"attachment;filename={table}.sql"},
+            )
+
+    return render_template("export.html", tables=tables)

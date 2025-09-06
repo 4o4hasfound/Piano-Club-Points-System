@@ -32,7 +32,7 @@
 
     <div class="field">
       <label for="password" class="label">密碼</label>
-      <input id="password" name="password" type="password" pattern="[a-zA-Z0-9_-]+"
+      <input id="password" name="password" type="password" pattern="[a-zA-Z0-9_\-]+"
              autocomplete="new-password" required minlength="4" maxlength="20"
              placeholder="4 到 20 碼" class="input" aria-describedby="password-hint password-error" />
       <small id="password-hint" class="hint">4 到 20 碼；建議混合大小寫、數字與符號(- 或者 _)。</small>
@@ -41,7 +41,7 @@
 
     <div class="field">
       <label for="confirm" class="label">確認密碼</label>
-      <input id="confirm" name="confirm" type="password" pattern="[a-zA-Z0-9_-]+"
+      <input id="confirm" name="confirm" type="password" pattern="[a-zA-Z0-9_\-]+"
              autocomplete="new-password" required placeholder="再次輸入密碼" 
              class="input" aria-describedby="confirm-error" />
       <div id="confirm-error" class="error" role="alert" aria-live="polite"></div>

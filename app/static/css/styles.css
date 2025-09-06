@@ -145,10 +145,11 @@ body {
 .actions {
   display: flex;
   gap: 14px;
-  margin-top: 8px;
+  margin: 16px 0;        /* outside spacing */
   flex-wrap: wrap;
   justify-content: center;
   width: 100%;
+  padding: 16px 24px;    /* inside spacing (top/bottom 16px, left/right 24px) */
 }
 
 .btn {

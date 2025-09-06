@@ -46,7 +46,7 @@
                     <tbody>
                         {% for r in records %}
                         <tr>
-                            <td>{{ r.time }}</td>
+                            <td class="utc-time" data-utc="{{ r.time.isoformat() }}"></td>
                             <td>
                                 <span class="badge {{ 'badge-add' if r.type == 'add' else 'badge-remove' }}">
                                     {{ '加點' if r.type == 'add' else '扣點' }}
@@ -69,7 +69,7 @@
         </div>
     </div>
 
-    <div class="actions" style="margin-top:10px;">
+    <div class="actions">
         <a class="btn btn-login" href="{{ url_for('main.index') }}" role="button">重新整理</a>
         {% if is_admin %}
         <a class="btn btn-secondary" href="{{ url_for('main.admin') }}" role="button">管理後台</a>
@@ -83,4 +83,8 @@
     <a class="btn btn-register" href="{{ url_for('main.register_get') }}" role="button">註冊</a>
 </div>
 {% endif %}
+{% endblock %}
+
+{% block body_scripts %}
+<script src="{{ url_for('static', filename='js/index.js') }}"></script>
 {% endblock %}

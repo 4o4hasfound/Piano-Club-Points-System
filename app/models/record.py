@@ -1,5 +1,6 @@
-from datetime import datetime
+from datetime import datetime, timezone, timedelta
 from sqlalchemy import CheckConstraint
+from sqlalchemy.sql import func
 from ..extensions import db
 
 class Record(db.Model):
@@ -8,8 +9,8 @@ class Record(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     user_account = db.Column(db.String(9), db.ForeignKey("users.account"), nullable=False)
 
-    time = db.Column(db.DateTime, default=datetime.utcnow, nullable=False)
-
+    time = db.Column(db.DateTime(timezone=True), server_default=func.now(), nullable=False)
+    
     # type: "add" or "remove"
     type = db.Column(db.String(7), nullable=False)
 

@@ -24,3 +24,6 @@ class Config:
 
 class DevConfig(Config):
     SQLALCHEMY_DATABASE_URI = f"sqlite:///{INSTANCE_DIR / 'app.sqlite'}"
+    SESSION_COOKIE_SECURE = True      # only over HTTPS
+    SESSION_COOKIE_HTTPONLY = True    # JS can’t read cookie
+    SESSION_COOKIE_SAMESITE = "Lax"   # or "Strict" if you don’t embed cross-site
