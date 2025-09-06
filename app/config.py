@@ -17,6 +17,10 @@ class Config:
         "poolclass": NullPool,      # serverless-friendly: don't hold idle conns
         "pool_pre_ping": True,      # validate connections
     }
+    
+    SESSION_COOKIE_SECURE = True      # only over HTTPS
+    SESSION_COOKIE_HTTPONLY = True    # JS can’t read cookie
+    SESSION_COOKIE_SAMESITE = "Lax"   # or "Strict" if you don’t embed cross-site
 
 class DevConfig(Config):
     SQLALCHEMY_DATABASE_URI = f"sqlite:///{INSTANCE_DIR / 'app.sqlite'}"
