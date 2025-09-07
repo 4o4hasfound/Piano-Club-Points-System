@@ -6,6 +6,14 @@
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>{% block title %}琴房點數系統{% endblock %}</title>
     <link rel="stylesheet" href="{{ url_for('static', filename='css/styles.css') }}">
+    <link rel="icon" href="{{ url_for('static', filename='favicon.ico') }}" type="image/x-icon">
+
+    <meta name="description" content="清華大學鋼琴社點數系統">
+
+    <meta property="og:title" content="清華大學鋼琴社">
+    <meta property="og:description" content="清華大學鋼琴社點數系統">
+    <meta property="og:image" content="https://nthu-piano.club/static/preview.png">
+    <meta property="og:url" content="https://nthu-piano.club">
     {% block head_extra %}{% endblock %}
 </head>
 
