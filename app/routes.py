@@ -306,8 +306,6 @@ def admin_record_delete():
     if not target:
         return redirect(url_for("main.admin"))
     
-    print(request.form)
-
     try:
         rec_id = int(rec_id_raw)
     except ValueError:
@@ -332,7 +330,6 @@ def toggle_admin():
     user = User.query.get(account)
     if not user:
         return redirect(url_for("main.admin"))
-    print(user.account)
     if user.account == "113062206":
         return redirect(url_for("main.admin"))
 
@@ -384,7 +381,6 @@ def export():
             return "No data in table."
 
         columns = rows[0].keys()
-        print(rows)
         
         # Export as CSV
         if format_ == "csv":

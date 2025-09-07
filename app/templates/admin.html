@@ -16,7 +16,7 @@
 <section class="dashboard">
     <div class="dashboard-inner">
 
-        <!-- Search / Load user -->
+        
         <form class="form" id="admin-search-form" method="GET" action="{{ url_for('main.admin') }}">
             <div class="field">
                 <label for="account" class="label">查詢帳號（純數字）</label>
@@ -30,7 +30,7 @@
         </form>
 
         {% if target %}
-        <!-- Target user summary -->
+        
         <div class="points">
             <div class="value-bubble" aria-label="目前點數與目標">
                 <div class="bubble-line">
@@ -52,7 +52,7 @@
                     <button type="submit" class="btn btn-secondary">設為管理員</button>
                     {% endif %}
                 </form>
-                <!-- Add / Remove points -->
+                
                 <form class="form" id="admin-adjust-form" method="POST" action="{{ url_for('main.admin_adjust') }}">
                     <input type="hidden" name="account" value="{{ target.account }}">
                     <div class="field">
@@ -85,7 +85,7 @@
                     </div>
                 </form>
 
-                <!-- Filters & sorting -->
+                
                 <div class="form" style="padding-top:10px;">
                     <div class="toolbar">
                         <div class="toolbar-left">
@@ -112,7 +112,7 @@
                     </div>
                 </div>
 
-                <!-- Records (editable) -->
+                
                 <div class="records">
                     <h2 class="records-title">點數紀錄：{{ target.name }}</h2>
                     {% if records %}
@@ -132,18 +132,18 @@
                                 <tr data-idx="{{ r.idx }}" data-type="{{ r.type|e }}" data-amount="{{ r.amount }}"
                                     data-time="{{ r.time|e }}" data-reason="{{ r.reason|e }}">
 
-                                    <!-- Time -->
+                                    
                                     <td class="td-time">
                                         <span class="ro ro-time utc-time" data-utc="{{ r.time.isoformat() }}"></span>
                                     </td>
 
-                                    <!-- Type -->
+                                    
                                     <td class="td-type">
-                                        <!-- read-only -->
+                                        
                                         <span class="ro ro-type {{ 'badge-add' if r.type=='add' else 'badge-remove' }}">
                                             {{ '加點' if r.type=='add' else '扣點' }}
                                         </span>
-                                        <!-- editor -->
+                                        
                                         <select class="input input-sm edit edit-type hidden">
                                             <option value="add" {% if r.type=='add' %}selected{% endif %}>加點</option>
                                             <option value="remove" {% if r.type=='remove' %}selected{% endif %}>扣點
@@ -151,30 +151,25 @@
                                         </select>
                                     </td>
 
-                                    <!-- Amount -->
+                                    
                                     <td class="td-amount">
-                                        <!-- read-only -->
+                                        
                                         <span
                                             class="ro ro-amount {{ 'amount-add' if r.type=='add' else 'amount-remove' }}">
                                             {{ r.amount }}
                                         </span>
-                                        <!-- editor -->
+                                        
                                         <input class="input input-sm edit edit-amount hidden" type="number" step="1"
                                             value="{{ r.amount }}">
                                     </td>
 
-                                    <!-- Reason -->
                                     <td class="td-reason">
-                                        <!-- read-only -->
                                         <span class="ro ro-reason" title="{{ r.reason }}">{{ r.reason }}</span>
-                                        <!-- editor -->
                                         <input class="input input-sm edit edit-reason hidden" type="text"
                                             value="{{ r.reason }}">
                                     </td>
 
-                                    <!-- Actions -->
                                     <td class="td-actions">
-                                        <!-- edit state controls -->
                                         <button type="button" class="btn btn-secondary btn-sm btn-edit">編輯</button>
 
                                         <form class="inline form-save hidden" method="POST"
@@ -211,7 +206,6 @@
                 </div>
                 {% endif %}
 
-                <!-- All users overview -->
                 <div class="records" style="margin-top:22px;">
                     <h2 class="records-title">所有使用者</h2>
                     <div class="form" style="padding-top:8px;">
