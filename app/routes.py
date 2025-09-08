@@ -17,6 +17,11 @@ bp = Blueprint("main", __name__)
 
 MILESTONE = 15
 TAIPEI = ZoneInfo("Asia/Taipei")
+MIN_POINT_UPDATE = -100
+MAX_POINT_UPDATE = 100
+
+def clamp_amount_update(amount: int) -> int:
+    return min(max(amount, MIN_POINT_UPDATE), MAX_POINT_UPDATE)
 
 # ---------------- Helpers ----------------
 def get_current_user():
@@ -231,6 +236,8 @@ def admin_adjust():
     # Normalize sign
     if op == "add" and amt < 0: amt = abs(amt)
     if op == "remove" and amt > 0: amt = -amt
+    
+    amt = clamp_amount_update(amt)
 
     rec = Record(user=target,
                  type="add" if amt > 0 else "remove",
@@ -277,6 +284,8 @@ def admin_record_update():
         amt = abs(amt)
     if typ == "remove" and amt > 0:
         amt = -amt
+        
+    amt = clamp_amount_update(amt)
 
     # --- Update the record ---
     rec = Record.query.filter_by(id=rec_id, user_account=account).first()
