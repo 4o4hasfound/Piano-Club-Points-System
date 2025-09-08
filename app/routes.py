@@ -85,8 +85,8 @@ def login_post():
 
     if not account.isdigit() or not (len(account) == 9):
         return render_template("login.html", error="帳號需為 9 位數字。"), 400
-    if len(password) < 8:
-        return render_template("login.html", error="密碼至少需 8 碼。"), 400
+    if len(password) < 4 or len(password) > 20:
+        return render_template("login.html", error="密碼需為 4 到 20 碼。"), 400
 
     user = User.query.get(account)
     if not user or not user.check_password(password):
