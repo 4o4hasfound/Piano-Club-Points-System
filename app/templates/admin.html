@@ -16,7 +16,7 @@
 <section class="dashboard">
     <div class="dashboard-inner">
 
-        
+
         <form class="form" id="admin-search-form" method="GET" action="{{ url_for('main.admin') }}">
             <div class="field">
                 <label for="account" class="label">查詢帳號（純數字）</label>
@@ -30,7 +30,7 @@
         </form>
 
         {% if target %}
-        
+
         <div class="points">
             <div class="value-bubble" aria-label="目前點數與目標">
                 <div class="bubble-line">
@@ -52,7 +52,7 @@
                     <button type="submit" class="btn btn-secondary">設為管理員</button>
                     {% endif %}
                 </form>
-                
+
                 <form class="form" id="admin-adjust-form" method="POST" action="{{ url_for('main.admin_adjust') }}">
                     <input type="hidden" name="account" value="{{ target.account }}">
                     <div class="field">
@@ -85,7 +85,7 @@
                     </div>
                 </form>
 
-                
+
                 <div class="form" style="padding-top:10px;">
                     <div class="toolbar">
                         <div class="toolbar-left">
@@ -112,7 +112,7 @@
                     </div>
                 </div>
 
-                
+
                 <div class="records">
                     <h2 class="records-title">點數紀錄：{{ target.name }}</h2>
                     {% if records %}
@@ -124,6 +124,7 @@
                                     <th>類型</th>
                                     <th>數量</th>
                                     <th>原因</th>
+                                    <th>操作人</th>
                                     <th>操作</th>
                                 </tr>
                             </thead>
@@ -132,18 +133,18 @@
                                 <tr data-idx="{{ r.idx }}" data-type="{{ r.type|e }}" data-amount="{{ r.amount }}"
                                     data-time="{{ r.time|e }}" data-reason="{{ r.reason|e }}">
 
-                                    
+
                                     <td class="td-time">
                                         <span class="ro ro-time utc-time" data-utc="{{ r.time.isoformat() }}"></span>
                                     </td>
 
-                                    
+
                                     <td class="td-type">
-                                        
+
                                         <span class="ro ro-type {{ 'badge-add' if r.type=='add' else 'badge-remove' }}">
                                             {{ '加點' if r.type=='add' else '扣點' }}
                                         </span>
-                                        
+
                                         <select class="input input-sm edit edit-type hidden">
                                             <option value="add" {% if r.type=='add' %}selected{% endif %}>加點</option>
                                             <option value="remove" {% if r.type=='remove' %}selected{% endif %}>扣點
@@ -151,14 +152,14 @@
                                         </select>
                                     </td>
 
-                                    
+
                                     <td class="td-amount">
-                                        
+
                                         <span
                                             class="ro ro-amount {{ 'amount-add' if r.type=='add' else 'amount-remove' }}">
                                             {{ r.amount }}
                                         </span>
-                                        
+
                                         <input class="input input-sm edit edit-amount hidden" type="number" step="1"
                                             value="{{ r.amount }}">
                                     </td>
@@ -167,6 +168,10 @@
                                         <span class="ro ro-reason" title="{{ r.reason }}">{{ r.reason }}</span>
                                         <input class="input input-sm edit edit-reason hidden" type="text"
                                             value="{{ r.reason }}">
+                                    </td>
+
+                                    <td class="td-author">
+                                        {{ r.author_account }} {{ r.author.name }}
                                     </td>
 
                                     <td class="td-actions">
@@ -208,22 +213,27 @@
 
                 <div class="records" style="margin-top:22px;">
                     <h2 class="records-title">所有使用者</h2>
-                    <div class="form" style="padding-top:8px;">
+                    <form method="GET" action="{{ url_for('main.admin') }}" class="form" style="padding-top:8px;">
                         <div class="field" style="display:flex; gap:12px; flex-wrap:wrap; align-items:center;">
-                            <input id="users-filter-text" class="input" style="max-width:260px;"
-                                placeholder="搜尋（帳號/姓名）">
+                            <input name="search" id="users-filter-text" class="input" style="max-width:260px;"
+                                placeholder="搜尋（帳號/姓名）" value="{{ search }}">
                             <label class="label" style="margin-left:auto;">排序</label>
-                            <select id="users-sort-key" class="input" style="max-width:220px;">
-                                <option value="account_asc">帳號（小→大）</option>
-                                <option value="account_desc">帳號（大→小）</option>
-                                <option value="name_asc">姓名（A→Z）</option>
-                                <option value="name_desc">姓名（Z→A）</option>
-                                <option value="points_desc">點數（大→小）</option>
-                                <option value="points_asc">點數（小→大）</option>
+                            <select name="sort" id="users-sort-key" class="input" style="max-width:220px;" onchange="this.form.submit()">
+                                <option value="account_asc" {% if sort=='account_asc' %}selected{% endif %}>帳號（小→大）
+                                </option>
+                                <option value="account_desc" {% if sort=='account_desc' %}selected{% endif %}>帳號（大→小）
+                                </option>
+                                <option value="name_asc" {% if sort=='name_asc' %}selected{% endif %}>姓名（A→Z）</option>
+                                <option value="name_desc" {% if sort=='name_desc' %}selected{% endif %}>姓名（Z→A）</option>
+                                <option value="points_desc" {% if sort=='points_desc' %}selected{% endif %}>點數（大→小）
+                                </option>
+                                <option value="points_asc" {% if sort=='points_asc' %}selected{% endif %}>點數（小→大）
+                                </option>
                             </select>
                         </div>
-                    </div>
+                    </form>
 
+                    {% if all_users|length > 0 %}
                     <div class="table-wrap">
                         <table class="table" id="admin-users-table" aria-label="所有使用者">
                             <thead>
@@ -236,27 +246,74 @@
                                 </tr>
                             </thead>
                             <tbody>
-                                {% for u in all_users %}
-                                <tr data-account="{{ u.account }}" data-name="{{ u.name|e }}"
-                                    data-points="{{ u.points }}" data-count="{{ u.count }}">
-                                    <td>{{ u.account }}</td>
-                                    <td>{{ u.name }}</td>
-                                    <td class="{{ 'amount-add' if u.points>=0 else 'amount-remove' }}">{{ u.points }}
+                                {% for account, name, points, count in all_users %}
+                                <tr data-account="{{ account }}" data-name="{{ name|e }}" data-points="{{ points }}"
+                                    data-count="{{ count }}">
+                                    <td>{{ account }}</td>
+                                    <td>{{ name }}</td>
+                                    <td class="{{ 'amount-add' if points>=0 else 'amount-remove' }}">{{ points }}</td>
+                                    <td>{{ count }}</td>
+                                    <td>
+                                        <a class="btn btn-sm {{ 'btn-success' if account == user.account else 'btn-secondary' }}"
+                                            href="{{ url_for('main.admin', target=account) }}">檢視</a>
                                     </td>
-                                    <td>{{ u.count }}</td>
-                                    <td><a class="btn btn-sm {{ 'btn-success' if u.account == user.account else 'btn-secondary' }}"
-                                            href="{{ url_for('main.admin', target=u.account) }}">檢視</a></td>
                                 </tr>
                                 {% endfor %}
                             </tbody>
                         </table>
                     </div>
+                    {% else %}
+                    <p class="hint">尚無紀錄。</p>
+                    {% endif %}
                 </div>
 
-                <div class="actions" style="margin-top: 0px;">
+                {% if total_pages > 1 %}
+                <div class="actions" style="margin-top: 0px; margin-bottom: 0px; padding-bottom: 0px;">
+                    <nav class="pagination-nav" aria-label="Users pagination">
+                        <ul class="pagination-list" style="display:flex; gap:6px; list-style:none; padding:0;">
+                            {% if page != 1 %}
+                            <li><a class="btn btn-outline btn-sm btn-narrow"
+                                    href="{{ url_for('main.admin', page=page-1, search=search, sort=sort) }}">上一頁</a>
+                            </li>
+                            {% endif %}
+
+                            {% for p in page_indexes %}
+                            <li>
+                                <a class="btn btn-sm btn-narrow {% if p == page %}btn-success{% else %}btn-secondary{% endif %}"
+                                    href="{{ url_for('main.admin', page=p, search=search, sort=sort) }}">{{ p }}</a>
+                            </li>
+                            {% endfor %}
+
+                            {% if page < total_pages %} <li><a class="btn btn-outline btn-sm btn-narrow"
+                                    href="{{ url_for('main.admin', page=page+1, search=search, sort=sort) }}">下一頁</a>
+                                </li>
+                                {% endif %}
+                        </ul>
+                    </nav>
+                </div>
+
+                <div class="actions"
+                    style="margin-top: 0px; margin-bottom: 0px; padding-top: 0px; padding-bottom: 0px;">
+                    <nav class="pagination-nav" aria-label="Users pagination">
+                        <ul class="pagination-list" style="display:flex; gap:6px; list-style:none; padding:0;">
+                            <li>
+                                <a class="btn btn-outline btn-sm"
+                                    href="{{ url_for('main.admin', page=1, search=search, sort=sort) }}">首頁</a>
+                            </li>
+                            <li>
+                                <a class="btn btn-outline btn-sm"
+                                    href="{{ url_for('main.admin', page=page_indexes|length, search=search, sort=sort) }}">最後一頁</a>
+                            </li>
+                        </ul>
+                    </nav>
+                </div>
+                {% endif %}
+
+                <div class="actions" style="margin-top: 0px; padding-top: 0px">
                     <a class="btn btn-login" href="{{ url_for('main.index') }}">返回首頁</a>
                     <a class="btn btn-secondary" href="{{ url_for('main.admins_list') }}">管理員清單</a>
                     <a class="btn btn-secondary" href="{{ url_for('main.export') }}">資料匯出</a>
+                    <a class="btn btn-secondary" href="{{ url_for('main.logs') }}">紀錄</a>
                     <a class="btn btn-register" href="{{ url_for('main.logout') }}">登出</a>
                 </div>
     </div>

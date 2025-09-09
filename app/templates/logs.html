@@ -1,0 +1,116 @@
+{% extends "base.html" %}
+{% block title %}系統紀錄｜琴房點數系統{% endblock %}
+
+{% block content %}
+<div class="hero">
+    <h1 id="app-title" class="title-box">系統紀錄</h1>
+    <p class="subtitle">顯示所有操作紀錄與系統事件。僅限管理員檢視。</p>
+</div>
+
+<section class="dashboard">
+    <div class="dashboard-inner">
+
+        <form class="form" id="log-search-form" method="GET" action="{{ url_for('main.logs') }}">
+            <div class="field-inline">
+                <div class="field flex-grow">
+                    <label for="q" class="label">搜尋紀錄</label>
+                    <input id="q" name="q" type="text" placeholder="輸入關鍵字..." class="input"
+                        value="{{ request.args.get('q', '') }}">
+                </div>
+                <div class="actions" style="align-self: flex-end;">
+                    <button type="submit" class="btn btn-secondary">搜尋</button>
+                    <a href="{{ url_for('main.logs') }}" class="btn btn-outline">清除</a>
+                </div>
+            </div>
+        </form>
+
+        <div class="records" style="margin-top: 16px;">
+            <h2 class="records-title">操作紀錄</h2>
+            {% if logs %}
+            <div class="table-wrap">
+                <table class="table" id="logs-table" aria-label="系統紀錄">
+                    <thead>
+                        <tr>
+                            <th>時間</th>
+                            <th>使用者</th>
+                            <th>頁面 URL</th>
+                            <th>紀錄原因</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for log in logs %}
+                        <tr>
+                            <td class="td-time">
+                                <span class="ro ro-time utc-time" data-utc="{{ log.time.isoformat() }}"></span>
+                            </td>
+                            <td class="td-user">
+                                {{ log.user.name if log.user else log.user_account }}
+                            </td>
+                            <td class="td-url">
+                                <span title="{{ log.url }}">{{ log.url }}</span>
+                            </td>
+                            <td class="td-log">
+                                {{ log.log }}
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+            {% if total_pages > 1 %}
+            <div class="actions" style="margin-top: 0px; margin-bottom: 0px; padding-bottom: 0px;">
+                {% if total_pages > 1 %}
+                <nav class="pagination-nav" aria-label="Users pagination">
+                    <ul class="pagination-list" style="display:flex; gap:6px; list-style:none; padding:0;">
+                        {% if page != 1 %}
+                        <li><a class="btn btn-outline btn-sm"
+                                href="{{ url_for('main.logs', page=page-1, search=search, sort=sort) }}">上一頁</a></li>
+                        {% endif %}
+
+                        {% for p in page_indexes %}
+                        <li>
+                            <a class="btn btn-sm btn-narrow {% if p == page %}btn-success{% else %}btn-secondary{% endif %}"
+                                href="{{ url_for('main.logs', page=p, search=search, sort=sort) }}">{{ p }}</a>
+                        </li>
+                        {% endfor %}
+
+                        {% if page < total_pages %} <li><a class="btn btn-outline btn-sm"
+                                href="{{ url_for('main.logs', page=page+1, search=search, sort=sort) }}">下一頁</a>
+                            </li>
+                        {% endif %}
+                    </ul>
+                </nav>
+                {% endif %}
+            </div>
+            
+            <div class="actions" style="margin-top: 0px; margin-bottom: 0px; padding-top: 0px; padding-bottom: 0px;">
+                <nav class="pagination-nav" aria-label="Users pagination">
+                    <ul class="pagination-list" style="display:flex; gap:6px; list-style:none; padding:0;">
+                        <li>
+                            <a class="btn btn-outline btn-sm"
+                                href="{{ url_for('main.logs', page=1, search=search, sort=sort) }}">首頁</a>
+                        </li>
+                        <li>
+                            <a class="btn btn-outline btn-sm"
+                                href="{{ url_for('main.logs', page=page_indexes|length, search=search, sort=sort) }}">最後一頁</a>
+                        </li>
+                    </ul>
+                </nav>
+            </div>
+            {% endif %}
+            {% else %}
+            <p class="hint">尚無紀錄。</p>
+            {% endif %}
+        </div>
+
+        <div class="actions" style="margin-top: 0px; padding-top: 0px">
+            <a class="btn btn-login" href="{{ url_for('main.index') }}">返回首頁</a>
+            <a class="btn btn-secondary" href="{{ url_for('main.admin') }}">返回後台</a>
+        </div>
+    </div>
+</section>
+{% endblock %}
+
+{% block body_scripts %}
+<script src="{{ url_for('static', filename='js/logs.js') }}"></script>
+{% endblock %}

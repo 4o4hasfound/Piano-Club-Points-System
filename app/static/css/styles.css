@@ -172,6 +172,10 @@ body {
   text-align: center;
 }
 
+.btn-narrow {
+  min-width: 100px;
+}
+
 .btn-edit {
   background: linear-gradient(135deg, #dbeafe, #bfdbfe); /* light blue gradient */
   color: #1e3a8a; /* dark blue text */
@@ -501,6 +505,7 @@ body {
   border-bottom: 1px solid rgba(100, 116, 139, .14);
   vertical-align: middle;
   text-align: center;
+  white-space: nowrap;
 }
 
 @media (max-width: 540px) {
@@ -840,7 +845,7 @@ body {
   font-size: 0.85rem;
   line-height: 1.2;
 }
-
+ 
 .btn-outline.danger {
   color: #7f1d1d;
   border-color: #fca5a5;

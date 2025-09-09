@@ -2,10 +2,11 @@ import csv
 import pandas as pd
 from re import fullmatch
 from functools import wraps
-from sqlalchemy import text
+from sqlalchemy import text, func, or_, select
 from zoneinfo import ZoneInfo
 from datetime import timedelta
 from io import StringIO, BytesIO
+from math import ceil
 from flask import Blueprint, request, render_template, redirect, url_for, session, Response
 
 from .models.user import User
@@ -166,21 +167,54 @@ def register_post():
 def admin():
     user = get_current_user()
     target_account = request.args.get("target", "").strip()
+    search = request.args.get("search", "").strip()
+    sort = request.args.get("sort", "account_asc")
+    page = request.args.get("page", 1, type=int)
+    per_page = 20
+
     target = None
     records = None
     is_admin = False
     
-    # All users overview
-    all_users = []
-    for u in User.query.all():
-        pts = sum(r.amount for r in u.records)
-        all_users.append({
-            "account": u.account,
-            "name": u.name,
-            "points": pts,
-            "count": len(u.records),
-        })
-
+    query = (
+        select(
+            User.account,
+            User.name,
+            func.coalesce(func.sum(Record.amount), 0).label("points"),
+            func.count(Record.id).label("count"),
+        )
+        .outerjoin(Record, User.account == Record.user_account)
+        .group_by(User.account, User.name)
+    )
+    
+    if search:
+        query = query.filter(
+            or_(
+                User.account.ilike(f"%{search}%"),
+                User.name.ilike(f"%{search}%"),
+            )
+        )
+        
+    if sort == "account_asc":
+        query = query.order_by(User.account.asc())
+    elif sort == "account_desc":
+        query = query.order_by(User.account.desc())
+    elif sort == "name_asc":
+        query = query.order_by(User.name.asc())
+    elif sort == "name_desc":
+        query = query.order_by(User.name.desc())
+    elif sort == "points_asc":
+        query = query.order_by(func.coalesce(func.sum(Record.amount), 0).asc())
+    elif sort == "points_desc":
+        query = query.order_by(func.coalesce(func.sum(Record.amount), 0).desc())
+        
+    count_query = select(func.count()).select_from(query.subquery())
+    total = db.session.execute(count_query).scalar()
+    total_pages = ceil(total / per_page)
+    
+    statement = query.limit(per_page).offset((page - 1) * per_page)
+    all_users = db.session.execute(statement).all()
+    
     if target_account:
         target_user = User.query.get(target_account)
         if target_user:
@@ -191,27 +225,41 @@ def admin():
             )
             is_admin = Admin.query.get(target_user.account) is not None
             points = sum(r.amount for r in records)
-            target = {"account": target_user.account,
-                      "name": target_user.name,
-                      "points": points}
+            target = {
+                "account": target_user.account,
+                "name": target_user.name,
+                "points": points,
+            }
         else:
             return render_template(
                 "admin.html",
                 user=user,
                 target=None,
                 records=None,
-                all_users=all_users,
+                all_users=[],
+                page=page,
+                total_page=0,
                 milestone=MILESTONE,
                 error="找不到該帳號。",
             )
-
+    
+    page_indexes = list(range(
+        max(1, page - 2), 
+        min(total_pages, page + 2) + 1
+    ))
+    
     return render_template(
         "admin.html",
         user=user,
         target=target,
         is_admin=is_admin,
         records=records,
+        page=page,
         all_users=all_users,
+        total_pages=total_pages,
+        page_indexes=page_indexes,
+        search=search,
+        sort=sort,
         milestone=MILESTONE,
     )
 
@@ -506,3 +554,34 @@ def export():
             db.session.commit()
 
     return render_template("export.html", tables=tables)
+
+@bp.route("/logs")
+def logs():
+    q = request.args.get("q", "")
+    page = request.args.get("page", 1, type=int)
+    per_page = 20
+
+    query = Log.query.order_by(Log.time.desc())
+    if q:
+        query = query.filter(Log.log.ilike(f"%{q}%"))
+        
+    count_query = select(func.count()).select_from(query.subquery())
+    total = db.session.execute(count_query).scalar()
+    total_pages = ceil(total / per_page)
+    
+    query = query.limit(per_page).offset((page - 1) * per_page)
+    logs = query.all()
+    
+    page_indexes = list(range(
+        max(1, page - 2), 
+        min(total_pages, page + 2) + 1
+    ))
+    
+    return render_template(
+        "logs.html",
+        logs=logs,
+        total_pages=total_pages,
+        page=page,
+        page_indexes=page_indexes,
+        q=q
+    )

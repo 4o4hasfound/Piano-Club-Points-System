@@ -1,14 +1,7 @@
-// Debounce helper
-function debounce(fn, ms = 200) {
-    let t;
-    return (...args) => {
-        clearTimeout(t);
-        t = setTimeout(() => fn(...args), ms);
-    };
-}
-
 document.querySelectorAll('.utc-time').forEach(td => {
     const dt = new Date(td.dataset.utc);
+    console.log(td.dataset);
+    console.log(dt);
     td.textContent = dt.toLocaleString("sv-SE", {
         timeZone: "Asia/Taipei",
         year: "numeric",
