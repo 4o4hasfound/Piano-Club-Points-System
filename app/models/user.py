@@ -19,7 +19,7 @@ class User(db.Model):
     authored_records = db.relationship(
         "Record",
         foreign_keys="Record.author_account",
-        back_populates="user"
+        back_populates="author"
     )
     logs = db.relationship(
         "Log", 
