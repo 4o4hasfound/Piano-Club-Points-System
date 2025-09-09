@@ -1,10 +1,21 @@
 from flask import Flask, render_template
-import html
+from datetime import datetime, timezone
+from datetime import timedelta
+from sqlalchemy import inspect
 
-from .models import user
+from .models.log import Log
 from .extensions import db, migrate
 from . import routes
 
+def cleanup_logs():
+    inspector = inspect(db.engine)
+    if "logs" not in inspector.get_table_names():
+        return
+
+    cutoff = datetime.now(timezone.utc) - timedelta(days=7)
+    db.session.query(Log).filter(Log.time < cutoff).delete()
+    db.session.commit()
+        
 def create_app(config_class="app.config.Config"):
     app = Flask(__name__, instance_relative_config=True)
     app.config.from_object(config_class)
@@ -16,19 +27,7 @@ def create_app(config_class="app.config.Config"):
     # register routes
     app.register_blueprint(routes.bp)
     
-    # @app.error_handler_spec(400)
-    # @app.error_handler_spec(404)
-    # def bad_request(e):
-    #     reason = getattr(e, "description", "Bad request")
-    #     safe_reason = html.escape(str(reason))
-    #     return render_template("error.html", code=e.code, reason=safe_reason)
+    with app.app_context():
+        cleanup_logs()
     
-    
-    # @app.errorhandler(500)
-    # def server_error(e):
-    #     db.session.rollback()
-    #     reason = getattr(e, "description", "Bad request")
-    #     safe_reason = html.escape(str(reason))
-    #     return render_template("error.html", code=e.code, reason=safe_reason)
-
     return app

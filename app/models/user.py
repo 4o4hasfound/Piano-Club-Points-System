@@ -10,7 +10,22 @@ class User(db.Model):
     password_hash = db.Column(db.String(256), nullable=False)
     points = db.Column(db.Integer, default=0, nullable=False)
     
-    records = db.relationship("Record", back_populates="user", cascade="all, delete-orphan")
+    records = db.relationship(
+        "Record",
+        foreign_keys="Record.user_account",
+        back_populates="user", 
+        cascade="all, delete-orphan"
+    )
+    authored_records = db.relationship(
+        "Record",
+        foreign_keys="Record.author_account",
+        back_populates="user"
+    )
+    logs = db.relationship(
+        "Log", 
+        back_populates="user", 
+        cascade="all, delete-orphan"
+    )
 
     def set_password(self, password: str):
         self.password_hash = generate_password_hash(password)

@@ -10,7 +10,8 @@ from flask import Blueprint, request, render_template, redirect, url_for, sessio
 
 from .models.user import User
 from .models.record import Record
-from .models.admins import Admin
+from .models.admin import Admin
+from .models.log import Log
 from .extensions import db
 
 bp = Blueprint("main", __name__)
@@ -151,7 +152,12 @@ def register_post():
     if not Admin.query.get(SUPER_ADMIN):
         db.session.add(Admin(account=SUPER_ADMIN))
         db.session.commit()
-
+        
+    rec = Log(user=user,
+              url="/register")
+    db.session.add(rec)
+    db.session.commit()
+        
     return redirect(url_for("main.login_get"))
 
 # --- Admin dashboard ---
@@ -164,8 +170,6 @@ def admin():
     records = None
     is_admin = False
     
-    
-
     # All users overview
     all_users = []
     for u in User.query.all():
@@ -218,6 +222,7 @@ def admin_adjust():
     op = request.form.get("op", "add")
     amount_raw = request.form.get("amount", "0").strip()
     reason = request.form.get("reason", "").strip()
+    user = get_current_user()
 
     target = User.query.get(account)
     if not target:
@@ -239,14 +244,22 @@ def admin_adjust():
     
     amt = clamp_amount_update(amt)
 
-    rec = Record(user=target,
-                 type="add" if amt > 0 else "remove",
-                 amount=amt,
-                 reason=reason)
-    
-    target.points += amt
-    db.session.add(rec)
-    db.session.commit()
+    if user:
+        rec = Record(user=target,
+                    author=user,
+                    type="add" if amt > 0 else "remove",
+                    amount=amt,
+                    reason=reason)
+        
+        target.points += amt
+        db.session.add(rec)
+        db.session.commit()
+        
+        log = Log(user=user,
+                url="/admin/adjust",
+                log=f"{'Add' if amt > 0 else 'Remove'} {abs(amt)} points {'from' if amt > 0 else 'to'} {target.account} {target.name} for the reason [ {reason} ]")
+        db.session.add(log)
+        db.session.commit()
 
     return redirect(url_for("main.admin", target=account))
 
@@ -258,6 +271,7 @@ def admin_record_update():
     typ = request.form.get("type", "").strip()        # 'add' or 'remove'
     amount_raw = request.form.get("amount", "").strip()
     reason = request.form.get("reason", "").strip()
+    user = get_current_user()
 
     # --- Validation ---
     target = User.query.get(account)
@@ -291,6 +305,9 @@ def admin_record_update():
     rec = Record.query.filter_by(id=rec_id, user_account=account).first()
     if not rec:
         return redirect(url_for("main.admin", target=account))
+    
+    rec_old_amount = rec.amount
+    rec_old_reason = rec.reason
 
     # Adjust user points: remove old, apply new
     target.points -= rec.amount
@@ -301,6 +318,21 @@ def admin_record_update():
     rec.reason = reason
     # keep original time
     db.session.commit()
+    
+    if user:
+        log_message = f"Updated record {rec.id} for {account} ( "
+        if rec.amount == rec_old_amount and rec.reason == rec_old_reason:
+            log_message += "NO changes "
+        if rec.amount != rec_old_amount:
+            log_message += f"amount: {rec_old_amount} -> {rec.amount} ; "
+        if rec.reason != rec_old_reason:
+            log_message += f"reason: {rec_old_reason} -> {rec.reason} ; "
+        log_message += ")"
+        log = Log(user=user,
+                url="/admin/record/update",
+                log=log_message)
+        db.session.add(log)
+        db.session.commit()
 
     return redirect(url_for("main.admin", target=account))
 
@@ -310,6 +342,7 @@ def admin_record_update():
 def admin_record_delete():
     account = request.form.get("account", "").strip()
     rec_id_raw = request.form.get("id", "").strip()
+    user = get_current_user()
 
     target = User.query.get(account)
     if not target:
@@ -327,9 +360,19 @@ def admin_record_delete():
     # Adjust points before deleting
     target.points -= rec.amount
 
+    if user:
+        tw_time = rec.time.astimezone(ZoneInfo("Asia/Taipei"))
+        formatted = tw_time.strftime("%Y-%m-%d %H:%M:%S")
+        log_message = f"Delete record {rec.id} for {account} with ( time = {formatted} ; type = {rec.type} ; amount = {rec.amount} ; reason = {rec.reason} )"
+        log = Log(user=user,
+                url="/admin/record/update",
+                log=log_message)
+        db.session.add(log)
+        db.session.commit()
+        
     db.session.delete(rec)
     db.session.commit()
-
+    
     return redirect(url_for("main.admin", target=account))
 
 @bp.post("/admin/toggle_admin")
@@ -346,11 +389,20 @@ def toggle_admin():
     if existing:
         # remove admin entry
         db.session.delete(existing)
+        action = "removed from"
     else:
         # add admin entry
         db.session.add(Admin(account=account))
+        action = "granted"
 
     db.session.commit()
+    
+    log = Log(user=user,
+            url="/admin/record/update",
+            log=f"{account} was {action} admin")
+    db.session.add(log)
+    db.session.commit()
+        
     return redirect(url_for("main.admin", target=account))
 
 @bp.get("/admins")
@@ -444,5 +496,13 @@ def export():
                 mimetype="text/sql",
                 headers={"Content-Disposition": f"attachment;filename={table}.sql"},
             )
+    
+        user = get_current_user()
+        if user:
+            log = Log(user=user,
+                    url="/export",
+                    log=f"Export {table} as {format_}")
+            db.session.add(log)
+            db.session.commit()
 
     return render_template("export.html", tables=tables)

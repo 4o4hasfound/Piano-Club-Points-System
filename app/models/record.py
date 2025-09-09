@@ -1,4 +1,3 @@
-from datetime import datetime, timezone, timedelta
 from sqlalchemy import CheckConstraint
 from sqlalchemy.sql import func
 from ..extensions import db
@@ -7,7 +6,8 @@ class Record(db.Model):
     __tablename__ = "records"
 
     id = db.Column(db.Integer, primary_key=True)
-    user_account = db.Column(db.String(9), db.ForeignKey("users.account"), nullable=False)
+    user_account = db.Column(db.String(9), db.ForeignKey("users.account", ondelete="CASCADE"), nullable=False)
+    author_account = db.Column(db.String(9), db.ForeignKey("users.account"), nullable=False)
 
     time = db.Column(db.DateTime(timezone=True), server_default=func.now(), nullable=False)
     
@@ -17,8 +17,18 @@ class Record(db.Model):
     amount = db.Column(db.Integer, nullable=False)
     reason = db.Column(db.String(255), nullable=True)
 
-    # backref to user
-    user = db.relationship("User", back_populates="records")
+    user = db.relationship(
+        "User",
+        foreign_keys=[user_account],
+        back_populates="records",
+        passive_deletes=True
+    )
+
+    author = db.relationship(
+        "User",
+        foreign_keys=[author_account],
+        back_populates="authored_records"
+    )
     
     __table_args__ = (
         CheckConstraint("amount != 0"),
