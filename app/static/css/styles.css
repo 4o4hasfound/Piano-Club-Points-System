@@ -286,7 +286,7 @@ body {
   .btn, 
   .btn-narrow {
     width: 100%;
-    min-width: 75px;
+    min-width: 50px;
   }
 
   .meta {
