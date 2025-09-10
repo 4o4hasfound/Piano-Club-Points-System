@@ -62,22 +62,12 @@
                 {% if total_pages > 1 %}
                 <nav class="pagination-nav" aria-label="Users pagination">
                     <ul class="pagination-list" style="display:flex; gap:6px; list-style:none; padding:0;">
-                        {% if page != 1 %}
-                        <li><a class="btn btn-outline btn-sm"
-                                href="{{ url_for('main.logs', page=page-1, search=search, sort=sort) }}">上一頁</a></li>
-                        {% endif %}
-
                         {% for p in page_indexes %}
                         <li>
                             <a class="btn btn-sm btn-narrow {% if p == page %}btn-success{% else %}btn-secondary{% endif %}"
                                 href="{{ url_for('main.logs', page=p, search=search, sort=sort) }}">{{ p }}</a>
                         </li>
                         {% endfor %}
-
-                        {% if page < total_pages %} <li><a class="btn btn-outline btn-sm"
-                                href="{{ url_for('main.logs', page=page+1, search=search, sort=sort) }}">下一頁</a>
-                            </li>
-                        {% endif %}
                     </ul>
                 </nav>
                 {% endif %}
@@ -90,6 +80,14 @@
                             <a class="btn btn-outline btn-sm"
                                 href="{{ url_for('main.logs', page=1, search=search, sort=sort) }}">首頁</a>
                         </li>
+                        {% if page != 1 %}
+                        <li><a class="btn btn-outline btn-sm"
+                                href="{{ url_for('main.logs', page=page-1, search=search, sort=sort) }}">上一頁</a></li>
+                        {% endif %}
+                        {% if page < total_pages %} <li><a class="btn btn-outline btn-sm"
+                                href="{{ url_for('main.logs', page=page+1, search=search, sort=sort) }}">下一頁</a>
+                            </li>
+                        {% endif %}
                         <li>
                             <a class="btn btn-outline btn-sm"
                                 href="{{ url_for('main.logs', page=page_indexes|length, search=search, sort=sort) }}">最後一頁</a>

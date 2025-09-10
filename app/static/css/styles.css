@@ -152,6 +152,14 @@ body {
   padding: 16px 24px;    /* inside spacing (top/bottom 16px, left/right 24px) */
 }
 
+.pagination-list {
+  display: flex;
+  gap: 6px;
+  list-style: none;
+  padding: 0;
+  justify-content: center;
+}
+
 .btn {
   appearance: none;
   border: 0;
