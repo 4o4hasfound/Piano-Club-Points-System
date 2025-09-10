@@ -283,12 +283,10 @@ body {
     flex-direction: column;
   }
 
-  .btn {
-    width: 100%;
-  }
-  
+  .btn, 
   .btn-narrow {
-    width: 50%;
+    width: 100%;
+    min-width: 75px;
   }
 
   .meta {
