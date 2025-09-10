@@ -7,7 +7,7 @@ from zoneinfo import ZoneInfo
 from datetime import timedelta
 from io import StringIO, BytesIO
 from math import ceil
-from flask import Blueprint, request, render_template, redirect, url_for, session, Response
+from flask import Blueprint, request, render_template, redirect, url_for, session, Response, send_from_directory
 
 from .models.user import User
 from .models.record import Record
@@ -584,4 +584,12 @@ def logs():
         page=page,
         page_indexes=page_indexes,
         q=q
+    )
+    
+@bp.route('/favicon.ico')
+def favicon():
+    return send_from_directory(
+        bp.static_folder, 
+        'favicon.ico',
+        mimetype='image/vnd.microsoft.icon'
     )
