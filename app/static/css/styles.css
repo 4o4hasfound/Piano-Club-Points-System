@@ -286,6 +286,10 @@ body {
   .btn {
     width: 100%;
   }
+  
+  .btn-narrow {
+    width: 50%;
+  }
 
   .meta {
     flex-direction: column;
