@@ -170,6 +170,7 @@ body {
   min-width: 140px;
   outline: none;
   text-align: center;
+  white-space: nowrap 
 }
 
 .btn-narrow {

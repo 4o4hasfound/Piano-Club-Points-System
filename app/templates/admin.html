@@ -271,23 +271,12 @@
                 <div class="actions" style="margin-top: 0px; margin-bottom: 0px; padding-bottom: 0px;">
                     <nav class="pagination-nav" aria-label="Users pagination">
                         <ul class="pagination-list" style="display:flex; gap:6px; list-style:none; padding:0;">
-                            {% if page != 1 %}
-                            <li><a class="btn btn-outline btn-sm btn-narrow"
-                                    href="{{ url_for('main.admin', page=page-1, search=search, sort=sort) }}">上一頁</a>
-                            </li>
-                            {% endif %}
-
                             {% for p in page_indexes %}
                             <li>
                                 <a class="btn btn-sm btn-narrow {% if p == page %}btn-success{% else %}btn-secondary{% endif %}"
                                     href="{{ url_for('main.admin', page=p, search=search, sort=sort) }}">{{ p }}</a>
                             </li>
                             {% endfor %}
-
-                            {% if page < total_pages %} <li><a class="btn btn-outline btn-sm btn-narrow"
-                                    href="{{ url_for('main.admin', page=page+1, search=search, sort=sort) }}">下一頁</a>
-                                </li>
-                                {% endif %}
                         </ul>
                     </nav>
                 </div>
@@ -300,6 +289,16 @@
                                 <a class="btn btn-outline btn-sm"
                                     href="{{ url_for('main.admin', page=1, search=search, sort=sort) }}">首頁</a>
                             </li>
+                            {% if page != 1 %}
+                            <li><a class="btn btn-outline btn-sm btn-narrow"
+                                    href="{{ url_for('main.admin', page=page-1, search=search, sort=sort) }}">上一頁</a>
+                            </li>
+                            {% endif %}
+                            {% if page < total_pages %}
+                            <li><a class="btn btn-outline btn-sm btn-narrow"
+                                    href="{{ url_for('main.admin', page=page+1, search=search, sort=sort) }}">下一頁</a>
+                            </li>
+                            {% endif %}
                             <li>
                                 <a class="btn btn-outline btn-sm"
                                     href="{{ url_for('main.admin', page=page_indexes|length, search=search, sort=sort) }}">最後一頁</a>
