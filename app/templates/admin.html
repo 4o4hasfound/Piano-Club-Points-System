@@ -274,7 +274,15 @@
                             {% for p in page_indexes %}
                             <li>
                                 <a class="btn btn-sm btn-narrow {% if p == page %}btn-success{% else %}btn-secondary{% endif %}"
-                                    href="{{ url_for('main.admin', page=p, search=search, sort=sort) }}">{{ p }}</a>
+                                    href="{{ url_for('main.admin', page=p, search=search, sort=sort) }}">
+                                {% if loop.first and page_indexes[0] != 1 %}
+                                ...
+                                {% endif %}
+                                    {{ p }}
+                                {% if loop.last and page_indexes[pages_indexes|length - 1] != total_pages %}
+                                ...
+                                {% endif %}
+                                </a>
                             </li>
                             {% endfor %}
                         </ul>
@@ -286,7 +294,7 @@
                     <nav class="pagination-nav" aria-label="Users pagination">
                         <ul class="pagination-list" style="display:flex; gap:6px; list-style:none; padding:0;">
                             <li>
-                                <a class="btn btn-outline btn-sm"
+                                <a class="btn btn-outline btn-sm btn-narrow"
                                     href="{{ url_for('main.admin', page=1, search=search, sort=sort) }}">首頁</a>
                             </li>
                             {% if page != 1 %}
@@ -300,8 +308,8 @@
                             </li>
                             {% endif %}
                             <li>
-                                <a class="btn btn-outline btn-sm"
-                                    href="{{ url_for('main.admin', page=page_indexes|length, search=search, sort=sort) }}">最後一頁</a>
+                                <a class="btn btn-outline btn-sm btn-narrow"
+                                    href="{{ url_for('main.admin', page=total_pages, search=search, sort=sort) }}">最後一頁</a>
                             </li>
                         </ul>
                     </nav>
