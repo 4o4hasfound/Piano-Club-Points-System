@@ -168,12 +168,16 @@ def register_post():
 def admin():
     user = get_current_user()
     target_account = request.args.get("target", "").strip()
+    targets_str = target_account
+    target_accounts = targets_str.split(',') if target_account else None
+    
     search = request.args.get("search", "").strip()
     sort = request.args.get("sort", "account_asc")
     page = request.args.get("page", 1, type=int)
     per_page = 20
 
     target = None
+    targets = None
     records = None
     is_admin = False
     
@@ -216,14 +220,36 @@ def admin():
     statement = query.limit(per_page).offset((page - 1) * per_page)
     all_users = db.session.execute(statement).all()
     
-    if target_account:
+    if target_accounts and len(target_accounts) > 1:
+        targets_user = User.query.filter(User.account.in_(target_accounts)).all()
+        
+        if targets_user:
+            targets = [{
+                "account": t.account,
+                "name": t.name,
+                "points": sum(r.amount for r in t.records),
+            } for t in targets_user]
+        else:
+            return render_template(
+                "admin.html",
+                user=user,
+                target=None,
+                targets=None,
+                is_admin=is_admin,
+                records=None,
+                page=page,
+                all_users=[],
+                total_pages=0,
+                page_indexes=[],
+                search=search,
+                sort=sort,
+                milestone=MILESTONE,
+                error="找不到批次帳號。",
+            )
+    elif target_account:
         target_user = User.query.get(target_account)
         if target_user:
-            records = (
-                Record.query.filter_by(user_account=target_account)
-                .order_by(Record.time.desc())
-                .all()
-            )
+            records = target_user.records
             is_admin = Admin.query.get(target_user.account) is not None
             points = sum(r.amount for r in records)
             target = {
@@ -236,10 +262,15 @@ def admin():
                 "admin.html",
                 user=user,
                 target=None,
+                targets=None,
+                is_admin=is_admin,
                 records=None,
-                all_users=[],
                 page=page,
-                total_page=0,
+                all_users=[],
+                total_pages=0,
+                page_indexes=[],
+                search=search,
+                sort=sort,
                 milestone=MILESTONE,
                 error="找不到該帳號。",
             )
@@ -253,6 +284,8 @@ def admin():
         "admin.html",
         user=user,
         target=target,
+        targets=targets,
+        targets_str=targets_str,
         is_admin=is_admin,
         records=records,
         page=page,
@@ -309,6 +342,57 @@ def admin_adjust():
                 log=f"{'Add' if amt > 0 else 'Remove'} {abs(amt)} points {'from' if amt > 0 else 'to'} {target.account} {target.name} for the reason [ {reason} ]")
         db.session.add(log)
         db.session.commit()
+
+    return redirect(url_for("main.admin", target=account))
+
+
+@bp.post("/admin/batch_adjust")
+@admin_required
+def admin_batch_adjust():
+    accounts_str = request.form.get("accounts", "").strip()
+    accounts = accounts_str.split(',')
+    op = request.form.get("op", "add")
+    amount_raw = request.form.get("amount", "0").strip()
+    reason = request.form.get("reason", "").strip()
+    user = get_current_user()
+
+    for account in accounts:
+        target = User.query.get(account)
+        if not target:
+            continue
+
+        try:
+            amt = int(amount_raw)
+        except ValueError:
+            continue
+
+        if amt == 0:
+            continue
+        if not reason:
+            continue
+
+        # Normalize sign
+        if op == "add" and amt < 0: amt = abs(amt)
+        if op == "remove" and amt > 0: amt = -amt
+        
+        amt = clamp_amount_update(amt)
+
+        if user:
+            rec = Record(user=target,
+                        author=user,
+                        type="add" if amt > 0 else "remove",
+                        amount=amt,
+                        reason=reason)
+            
+            target.points += amt
+            db.session.add(rec)
+            db.session.commit()
+            
+            log = Log(user=user,
+                    url="/admin/adjust",
+                    log=f"{'Add' if amt > 0 else 'Remove'} {abs(amt)} points {'from' if amt > 0 else 'to'} {target.account} {target.name} for the reason [ {reason} ]")
+            db.session.add(log)
+            db.session.commit()
 
     return redirect(url_for("main.admin", target=account))
 
@@ -423,6 +507,19 @@ def admin_record_delete():
     db.session.commit()
     
     return redirect(url_for("main.admin", target=account))
+
+@bp.get("/admin/batch_user_remove")
+@admin_required
+def admin_batch_user_remove():
+    accounts_str = request.args.get("accounts", "").strip()
+    accounts = accounts_str.split(',')
+    print(accounts)
+    target_account = request.args.get("target", "").strip()
+    accounts.remove(target_account)
+    
+    print(accounts)
+
+    return redirect(url_for("main.admin", target=",".join(accounts)))
 
 @bp.post("/admin/toggle_admin")
 @admin_required

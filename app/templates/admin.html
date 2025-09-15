@@ -19,9 +19,9 @@
 
         <form class="form" id="admin-search-form" method="GET" action="{{ url_for('main.admin') }}">
             <div class="field">
-                <label for="account" class="label">查詢帳號（純數字）</label>
-                <input id="account" name="target" type="text" inputmode="numeric" pattern="\d+" required
-                    placeholder="例如：113062206" class="input" value="{{ target.account or '' }}">
+                <label for="account" class="label">查詢帳號</label>
+                <input id="account" name="target" type="text" inputmode="numeric" pattern="[\d,]+" required
+                    class="input" value="{{ target.account or targets_str or ''}}">
             </div>
             <div class="actions">
                 <button type="submit" class="btn btn-secondary">查詢</button>
@@ -71,13 +71,11 @@
                     <div class="field-inline">
                         <div class="field half">
                             <label for="amount" class="label">數量（整數）</label>
-                            <input id="amount" name="amount" type="number" step="1" required placeholder="例如：3"
-                                class="input">
+                            <input id="amount" name="amount" type="number" step="1" required class="input">
                         </div>
                         <div class="field flex-grow">
                             <label for="reason" class="label">原因</label>
-                            <input id="reason" name="reason" type="text" required placeholder="例如：活動協助 / 遲到扣點"
-                                class="input">
+                            <input id="reason" name="reason" type="text" required class="input">
                         </div>
                     </div>
                     <div class="actions">
@@ -202,6 +200,72 @@
                                 {% endfor %}
 
 
+                            </tbody>
+                        </table>
+                    </div>
+                    {% else %}
+                    <p class="hint">尚無紀錄。</p>
+                    {% endif %}
+                </div>
+                {% endif %}
+
+                {% if targets %}
+                <form class="form" id="admin-adjust-form" method="POST" action="{{ url_for('main.admin_batch_adjust') }}">
+                    <input type="hidden" name="accounts" value="{{ targets_str }}">
+                    <div class="field">
+                        <label for="op" class="label">操作</label>
+                        <div class="radio-group center">
+                            <label class="checkbox">
+                                <input type="radio" name="op" value="add" checked>
+                                <span>加點</span>
+                            </label>
+                            <label class="checkbox">
+                                <input type="radio" name="op" value="remove">
+                                <span>扣點</span>
+                            </label>
+                        </div>
+                    </div>
+                    <div class="field-inline">
+                        <div class="field half">
+                            <label for="amount" class="label">數量（整數）</label>
+                            <input id="amount" name="amount" type="number" step="1" required class="input">
+                        </div>
+                        <div class="field flex-grow">
+                            <label for="reason" class="label">原因</label>
+                            <input id="reason" name="reason" type="text" required class="input">
+                        </div>
+                    </div>
+                    <div class="actions">
+                        <button type="submit" class="btn btn-register">提交變更</button>
+                    </div>
+                </form>
+
+                <div class="records" style="margin-top:22px;">
+                    <h2 class="records-title">批次使用者查詢</h2>
+
+                    {% if targets|length > 0 %}
+                    <div class="table-wrap">
+                        <table class="table" id="admin-users-table" aria-label="批次使用者查詢">
+                            <thead>
+                                <tr>
+                                    <th>帳號</th>
+                                    <th>姓名</th>
+                                    <th>點數</th>
+                                    <th>動作</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for t in targets %}
+                                <tr data-account="{{ account }}" data-name="{{ name|e }}" data-points="{{ points }}">
+                                    <td>{{ t.account }}</td>
+                                    <td>{{ t.name }}</td>
+                                    <td class="{{ 'amount-add' if t.points >= 0 else 'amount-remove' }}"> {{ t.points }} </td>
+                                    <td>
+                                        <a class="btn btn-sm btn-danger"
+                                            href="{{ url_for('main.admin_batch_user_remove', accounts=targets_str, target=t.account) }}">移除</a>
+                                    </td>
+                                </tr>
+                                {% endfor %}
                             </tbody>
                         </table>
                     </div>
