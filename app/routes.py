@@ -217,7 +217,7 @@ def admin():
     total = db.session.execute(count_query).scalar()
     total_pages = ceil(total / per_page)
     
-    statement = query.limit(per_page).offset((page - 1) * per_page)
+    statement = query.order_by(User.account).limit(per_page).offset((page - 1) * per_page)    
     all_users = db.session.execute(statement).all()
     
     if target_accounts and len(target_accounts) > 1:
@@ -355,6 +355,8 @@ def admin_batch_adjust():
     amount_raw = request.form.get("amount", "0").strip()
     reason = request.form.get("reason", "").strip()
     user = get_current_user()
+    
+    accounts = list(set(accounts))
 
     for account in accounts:
         target = User.query.get(account)
@@ -389,7 +391,7 @@ def admin_batch_adjust():
             db.session.commit()
             
             log = Log(user=user,
-                    url="/admin/adjust",
+                    url="/admin/batch_adjust",
                     log=f"{'Add' if amt > 0 else 'Remove'} {abs(amt)} points {'from' if amt > 0 else 'to'} {target.account} {target.name} for the reason [ {reason} ]")
             db.session.add(log)
             db.session.commit()
@@ -513,11 +515,8 @@ def admin_record_delete():
 def admin_batch_user_remove():
     accounts_str = request.args.get("accounts", "").strip()
     accounts = accounts_str.split(',')
-    print(accounts)
     target_account = request.args.get("target", "").strip()
     accounts.remove(target_account)
-    
-    print(accounts)
 
     return redirect(url_for("main.admin", target=",".join(accounts)))
 
