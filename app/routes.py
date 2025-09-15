@@ -394,7 +394,7 @@ def admin_batch_adjust():
             db.session.add(log)
             db.session.commit()
 
-    return redirect(url_for("main.admin", target=account))
+    return redirect(url_for("main.admin", target=accounts_str))
 
 @bp.post("/admin/record/update")
 @admin_required
