@@ -1,12 +1,8 @@
-FROM python:3.13-slim
+FROM python:3.13
 
 ENV PYTHONUNBUFFERED=1
 
 WORKDIR /app
-
-RUN apt-get update && apt-get install -y \
-    libpq-dev gcc \
-    && rm -rf /var/lib/apt/lists/*
 
 COPY requirements.txt .
 
