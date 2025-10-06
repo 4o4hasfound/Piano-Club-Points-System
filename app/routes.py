@@ -652,41 +652,41 @@ def export():
 
     return render_template("export.html", tables=tables)
 
-@bp.route("/logs")
-def logs():
-    q = request.args.get("q", "")
-    page = request.args.get("page", 1, type=int)
-    per_page = 20
+    @bp.route("/logs")
+    def logs():
+        q = request.args.get("q", "")
+        page = request.args.get("page", 1, type=int)
+        per_page = 20
 
-    query = Log.query.order_by(Log.time.desc())
-    if q:
-        query = query.filter(Log.log.ilike(f"%{q}%"))
+        query = Log.query.order_by(Log.time.desc())
+        if q:
+            query = query.filter(Log.log.ilike(f"%{q}%"))
+            
+        count_query = select(func.count()).select_from(query.subquery())
+        total = db.session.execute(count_query).scalar()
+        total_pages = ceil(total / per_page)
         
-    count_query = select(func.count()).select_from(query.subquery())
-    total = db.session.execute(count_query).scalar()
-    total_pages = ceil(total / per_page)
-    
-    query = query.limit(per_page).offset((page - 1) * per_page)
-    logs = query.all()
-    
-    page_indexes = list(range(
-        max(1, page - 2), 
-        min(total_pages, page + 2) + 1
-    ))
-    
-    return render_template(
-        "logs.html",
-        logs=logs,
-        total_pages=total_pages,
-        page=page,
-        page_indexes=page_indexes,
-        q=q
-    )
-    
-@bp.route('/favicon.ico')
-def favicon():
-    return send_from_directory(
-        'static', 
-        'favicon.ico',
-        mimetype='image/vnd.microsoft.icon'
-    )
+        query = query.limit(per_page).offset((page - 1) * per_page)
+        logs = query.all()
+        
+        page_indexes = list(range(
+            max(1, page - 2), 
+            min(total_pages, page + 2) + 1
+        ))
+        
+        return render_template(
+            "logs.html",
+            logs=logs,
+            total_pages=total_pages,
+            page=page,
+            page_indexes=page_indexes,
+            q=q
+        )
+        
+    @bp.route('/favicon.ico')
+    def favicon():
+        return send_from_directory(
+            'static', 
+            'favicon.ico',
+            mimetype='image/vnd.microsoft.icon'
+        )

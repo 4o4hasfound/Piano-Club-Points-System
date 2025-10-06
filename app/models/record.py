@@ -19,7 +19,7 @@ class Record(db.Model):
 
     user = db.relationship(
         "User",
-        foreign_keys=[user_account],
+        z=[user_account],
         back_populates="records",
         passive_deletes=True
     )
